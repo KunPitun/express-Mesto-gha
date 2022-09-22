@@ -19,6 +19,6 @@ module.exports = {
   ],
   rules: {
     'eol-last': 0,
-    'no-underscore-dangle': 0,
+    'no-underscore-dangle': [2, { allow: ['_id'] }],
   },
 };
