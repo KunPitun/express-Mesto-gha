@@ -1,11 +1,5 @@
 {
   "extends": "airbnb-base",
   "linebreak-style": ["error", "windows"],
-  "no-underscore-dangle": ["error", { "allow": ["_id"] }]//???
+  "no-underscore-dangle": ["error", { "allow": ["_id"] }]
 }
-/* я не понимаю почему no-underscore-dangle из этого файла не применяется,
-хотя я вроде сделал всё как в инструкции на официальном сайте. Получилось обойти
-это прописав в eslintrc.js в rules 'no-underscore-dangle': 0, (пробовал прописать
-там что-то по типу 'no-underscore-dangle': [1, { 'allow': ['_id'] }], но такой
-номер не прошёл) в интернете находил лишь общие настройки конфигурационных файлов,
-а как и куда именно это правило прописать найти не смог*/
