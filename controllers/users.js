@@ -62,7 +62,6 @@ module.exports.getUser = (req, res) => {
       res.status(200).send({ data: formattingUserData(user) });
     })
     .catch((err) => {
-      console.log(err);
       handleErrors(res, err, 'getUser');
     });
 };
