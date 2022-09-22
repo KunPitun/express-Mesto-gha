@@ -71,7 +71,7 @@ module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
     .then((user) => {
-      res.status(201).send({ data: formattingUserData(user) });
+      res.status(200).send({ data: formattingUserData(user) });
     })
     .catch((err) => {
       handleErrors(res, err, 'createUser');
@@ -84,7 +84,7 @@ module.exports.updateUser = (req, res) => {
     new: true, runValidators: true,
   })
     .then((user) => {
-      res.status(201).send({ data: formattingUserData(user) });
+      res.status(200).send({ data: formattingUserData(user) });
     })
     .catch((err) => {
       handleErrors(res, err, 'updateUser');
@@ -97,7 +97,7 @@ module.exports.updateUserAvatar = (req, res) => {
     new: true, runValidators: true,
   })
     .then((user) => {
-      res.status(201).send({ data: formattingUserData(user) });
+      res.status(200).send({ data: formattingUserData(user) });
     })
     .catch((err) => {
       handleErrors(res, err, 'updateUserAvatar');

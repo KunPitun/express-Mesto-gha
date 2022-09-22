@@ -68,7 +68,7 @@ module.exports.createCard = (req, res) => {
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
-      res.status(201).send({ data: formattingCardData(card) });
+      res.status(200).send({ data: formattingCardData(card) });
     })
     .catch((err) => {
       handleErrors(res, err, 'deleteCard');
@@ -78,7 +78,7 @@ module.exports.deleteCard = (req, res) => {
 module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .then((card) => {
-      res.status(201).send({ data: formattingCardData(card) });
+      res.status(200).send({ data: formattingCardData(card) });
     })
     .catch((err) => {
       handleErrors(res, err, 'likeCard');
@@ -88,7 +88,7 @@ module.exports.likeCard = (req, res) => {
 module.exports.dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
     .then((card) => {
-      res.status(201).send({ data: formattingCardData(card) });
+      res.status(200).send({ data: formattingCardData(card) });
     })
     .catch((err) => {
       handleErrors(res, err, 'dislikeCard');
