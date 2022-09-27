@@ -1,15 +1,17 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 const cardSchema = mongoose.Schema({
   name: {
     type: String,
-    minlength: 2,
-    maxlength: 30,
+    minlength: [2, 'Название карточки должно быть не меньше 2-х символов'],
+    maxlength: [30, 'Название карточки должно быть не меньше 2-х символов'],
     required: true,
   },
   link: {
     type: String,
     required: true,
+    validate: [validator.isURL, 'Некорректная ссылка на картинку'],
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
