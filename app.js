@@ -4,10 +4,10 @@ const cookieParser = require('cookie-parser');
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const { celebrateErrors } = require('celebrate');
+const { errors } = require('celebrate');
 const { createUser, login } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-const errors = require('./middlewares/errors');
+const errorsHandler = require('./middlewares/errors');
 const NotFoundError = require('./errors/not-found-error');
 const { loginOrCreateUserValidator } = require('./validators/celebrate-validators');
 
@@ -16,7 +16,7 @@ const app = express();
 
 app.use(helmet());
 
-app.use(celebrateErrors());
+app.use(errors());
 
 app.use(cookieParser());
 
@@ -37,6 +37,6 @@ app.use('/cards', require('./routes/cards'));
 
 app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
 
-app.use(errors);
+app.use(errorsHandler);
 
 app.listen(PORT);
