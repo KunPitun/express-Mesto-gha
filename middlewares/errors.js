@@ -6,5 +6,5 @@ module.exports = (err, req, res) => {
   if (isCelebrateError(err)) {
     res.status(BadRequestErrCode).send({ message: 'Переданы некорректные данные' });
   }
-  res.send({ message: err.message });
+  res.status(err.code).send({ message: err.message });
 };
