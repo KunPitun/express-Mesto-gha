@@ -1,8 +1,14 @@
 const { celebrate, Joi } = require('celebrate');
 
-module.exports.idValidator = celebrate({
+module.exports.userIdValidator = celebrate({
   params: Joi.object().keys({
     userId: Joi.string().required().alphanum().length(24),
+  }),
+});
+
+module.exports.cardIdValidator = celebrate({
+  params: Joi.object().keys({
+    cardId: Joi.string().required().alphanum().length(24),
   }),
 });
 
