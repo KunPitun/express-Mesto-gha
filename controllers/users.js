@@ -37,7 +37,20 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       email, password: hash, name, about, avatar,
     }))
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({
+      data: {
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+        _id: user._id,
+      }, /* По какой-то непонятной мне причине, не смотря на установленное
+      select: false, в user попадает свойство password, причём происходит
+      это только при создании пользователя, в остальных случаях всё работает
+      как и должно. В интернете нашёл такую проблему только во вложенных схемах,
+      здесь же я без понятия, почему так происходит, поэтому использовал
+      такой костыль */
+    }))
     .catch((err) => handleErrors(err, next));
 };
 

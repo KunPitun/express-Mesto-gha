@@ -3,7 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcrypt');
 const UnauthorizedError = require('../errors/unauthorized-error');
 
-const userSchema = mongoose.Schema({
+const userSchema = new mongoose.Schema({
   name: {
     type: String,
     minlength: [2, 'Имя пользователя должно быть не меньше 2-х символов'],
@@ -20,17 +20,17 @@ const userSchema = mongoose.Schema({
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
   },
-  password: {
-    type: String,
-    minlength: [8, 'Пароль должен содержать не менее 8-ми символов'],
-    required: [true, 'Не указан пароль'],
-    select: false,
-  },
   email: {
     type: String,
     unique: true,
     required: [true, 'Не указан email'],
     validate: [validator.isEmail, 'Некорректный email'],
+  },
+  password: {
+    type: String,
+    select: false,
+    minlength: [8, 'Пароль должен содержать не менее 8-ми символов'],
+    required: [true, 'Не указан пароль'],
   },
 });
 

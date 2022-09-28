@@ -9,26 +9,25 @@ const { createUser, login } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const errorsHandler = require('./middlewares/errors');
 const NotFoundError = require('./errors/not-found-error');
-const { loginOrCreateUserValidator } = require('./validators/celebrate-validators');
+const { loginValidator, createUserValidator } = require('./validators/celebrate-validators');
 
 const { PORT = 3000 } = process.env;
 const app = express();
-
-app.use(helmet());
-
-app.use(errors());
-
-app.use(cookieParser());
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
 });
 
-app.post('/signin', loginOrCreateUserValidator, login);
-app.post('/signup', loginOrCreateUserValidator, createUser);
+app.use(helmet());
+
+app.use(bodyParser.json());
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(errors());
+
+app.post('/signin', loginValidator, login);
+app.post('/signup', createUserValidator, createUser);
 
 app.use(auth);
 
