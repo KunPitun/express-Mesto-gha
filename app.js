@@ -24,7 +24,6 @@ app.use(bodyParser.json());
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(errors());
 
 app.post('/signin', loginValidator, login);
 app.post('/signup', createUserValidator, createUser);
@@ -36,6 +35,7 @@ app.use('/cards', require('./routes/cards'));
 
 app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
 
+app.use(errors());
 app.use(errorsHandler);
 
 app.listen(PORT);
