@@ -6,7 +6,7 @@ const NotFoundError = require('../errors/not-found-error');
 const InternalServerError = require('../errors/internal-server-error');
 const BadRequestError = require('../errors/bad-request-error');
 const ConflictError = require('../errors/conflict-error');
-const handleErrors = require('../errors/handle-errors');
+const { handleErrors } = require('../errors/handle-errors');
 
 module.exports.getAllUsers = (req, res, next) => {
   User.find({})

@@ -3,7 +3,7 @@ const NotFoundError = require('../errors/not-found-error');
 const InternalServerError = require('../errors/internal-server-error');
 const BadRequestError = require('../errors/bad-request-error');
 const ForbiddenError = require('../errors/forbidden-error');
-const handleErrors = require('../errors/handle-errors');
+const { handleErrors } = require('../errors/handle-errors');
 
 module.exports.getAllCards = (req, res, next) => {
   Card.find({})
