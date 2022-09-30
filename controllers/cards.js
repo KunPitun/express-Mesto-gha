@@ -3,6 +3,7 @@ const NotFoundError = require('../errors/not-found-error');
 const InternalServerError = require('../errors/internal-server-error');
 const BadRequestError = require('../errors/bad-request-error');
 const ForbiddenError = require('../errors/forbidden-error');
+const handleErrors = require('../errors/handle-errors');
 
 module.exports.getAllCards = (req, res, next) => {
   Card.find({})
@@ -45,15 +46,11 @@ module.exports.deleteCard = (req, res, next) => {
       }
     })
     .catch((err) => {
-      if (err.name === 'NotFoundError' || err.name === 'ForbiddenError') {
+      if (err.name === 'ForbiddenError') {
         next(err);
         return;
       }
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Некорректный _id'));
-        return;
-      }
-      next(new InternalServerError('Ошибка на стороне сервера'));
+      handleErrors(err, next);
     });
 };
 
@@ -63,17 +60,7 @@ module.exports.likeCard = (req, res, next) => {
       throw new NotFoundError('Карточка с данным _id не найдена');
     })
     .then((card) => res.send({ data: card }))
-    .catch((err) => {
-      if (err.name === 'NotFoundError') {
-        next(err);
-        return;
-      }
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Некорректный _id'));
-        return;
-      }
-      next(new InternalServerError('Ошибка на стороне сервера'));
-    });
+    .catch((err) => handleErrors(err, next));
 };
 
 module.exports.dislikeCard = (req, res, next) => {
@@ -82,15 +69,5 @@ module.exports.dislikeCard = (req, res, next) => {
       throw new NotFoundError('Карточка с данным _id не найдена');
     })
     .then((card) => res.send({ data: card }))
-    .catch((err) => {
-      if (err.name === 'NotFoundError') {
-        next(err);
-        return;
-      }
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Некорректный _id'));
-        return;
-      }
-      next(new InternalServerError('Ошибка на стороне сервера'));
-    });
+    .catch((err) => handleErrors(err, next));
 };

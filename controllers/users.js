@@ -6,6 +6,7 @@ const NotFoundError = require('../errors/not-found-error');
 const InternalServerError = require('../errors/internal-server-error');
 const BadRequestError = require('../errors/bad-request-error');
 const ConflictError = require('../errors/conflict-error');
+const handleErrors = require('../errors/handle-errors');
 
 module.exports.getAllUsers = (req, res, next) => {
   User.find({})
@@ -21,17 +22,7 @@ module.exports.getUser = (req, res, next) => {
       throw new NotFoundError('Пользователь с данным _id не найден');
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'NotFoundError') {
-        next(err);
-        return;
-      }
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Некорректный _id'));
-        return;
-      }
-      next(new InternalServerError('Ошибка на стороне сервера'));
-    });
+    .catch((err) => handleErrors(err, next));
 };
 
 module.exports.getUserMe = (req, res, next) => {
@@ -40,17 +31,7 @@ module.exports.getUserMe = (req, res, next) => {
       throw new NotFoundError('Пользователь с данным _id не найден');
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'NotFoundError' || err.name === 'UnauthorizedError') {
-        next(err);
-        return;
-      }
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Некорректный _id'));
-        return;
-      }
-      next(new InternalServerError('Ошибка на стороне сервера'));
-    });
+    .catch((err) => handleErrors(err, next));
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -111,10 +92,6 @@ module.exports.updateUser = (req, res, next) => {
     })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.name === 'NotFoundError' || err.name === 'UnauthorizedError') {
-        next(err);
-        return;
-      }
       if (err.name === 'ValidationError') {
         if (err.errors.name) {
           next(new BadRequestError(err.errors.name.message));
@@ -125,11 +102,7 @@ module.exports.updateUser = (req, res, next) => {
           return;
         }
       }
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Некорректный _id'));
-        return;
-      }
-      next(new InternalServerError('Ошибка на стороне сервера'));
+      handleErrors(err, next);
     });
 };
 
@@ -143,21 +116,13 @@ module.exports.updateUserAvatar = (req, res, next) => {
     })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.name === 'NotFoundError' || err.name === 'UnauthorizedError') {
-        next(err);
-        return;
-      }
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Некорректный _id'));
-        return;
-      }
       if (err.name === 'ValidationError') {
         if (err.errors.avatar) {
           next(new BadRequestError(err.errors.avatar.message));
           return;
         }
       }
-      next(new InternalServerError('Ошибка на стороне сервера'));
+      handleErrors(err, next);
     });
 };
 
