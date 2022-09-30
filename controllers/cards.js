@@ -1,19 +1,34 @@
 const Card = require('../models/card');
-const { handleErrors } = require('../errors/handle-errors');
 const NotFoundError = require('../errors/not-found-error');
+const InternalServerError = require('../errors/internal-server-error');
+const BadRequestError = require('../errors/bad-request-error');
 const ForbiddenError = require('../errors/forbidden-error');
 
 module.exports.getAllCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
-    .catch((err) => handleErrors(err, next));
+    .catch(() => {
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
 
 module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.send({ data: card }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        if (err.errors.name) {
+          next(new BadRequestError(err.errors.name.message));
+          return;
+        }
+        if (err.errors.link) {
+          next(new BadRequestError(err.errors.link.message));
+          return;
+        }
+        next(new InternalServerError('Ошибка на стороне сервера'));
+      }
+    });
 };
 
 module.exports.deleteCard = (req, res, next) => {
@@ -29,7 +44,17 @@ module.exports.deleteCard = (req, res, next) => {
         throw new ForbiddenError('Недостаточно прав для выполнения данного действия');
       }
     })
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError' || err.name === 'ForbiddenError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Некорректный _id'));
+        return;
+      }
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
 
 module.exports.likeCard = (req, res, next) => {
@@ -38,7 +63,17 @@ module.exports.likeCard = (req, res, next) => {
       throw new NotFoundError('Карточка с данным _id не найдена');
     })
     .then((card) => res.send({ data: card }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Некорректный _id'));
+        return;
+      }
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
 
 module.exports.dislikeCard = (req, res, next) => {
@@ -47,5 +82,15 @@ module.exports.dislikeCard = (req, res, next) => {
       throw new NotFoundError('Карточка с данным _id не найдена');
     })
     .then((card) => res.send({ data: card }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Некорректный _id'));
+        return;
+      }
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };

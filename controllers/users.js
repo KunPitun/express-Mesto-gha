@@ -3,12 +3,16 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-error');
-const { handleErrors } = require('../errors/handle-errors');
+const InternalServerError = require('../errors/internal-server-error');
+const BadRequestError = require('../errors/bad-request-error');
+const ConflictError = require('../errors/conflict-error');
 
 module.exports.getAllUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch((err) => handleErrors(err, next));
+    .catch(() => {
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
 
 module.exports.getUser = (req, res, next) => {
@@ -17,7 +21,17 @@ module.exports.getUser = (req, res, next) => {
       throw new NotFoundError('Пользователь с данным _id не найден');
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Некорректный _id'));
+        return;
+      }
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
 
 module.exports.getUserMe = (req, res, next) => {
@@ -26,7 +40,17 @@ module.exports.getUserMe = (req, res, next) => {
       throw new NotFoundError('Пользователь с данным _id не найден');
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError' || err.name === 'UnauthorizedError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Некорректный _id'));
+        return;
+      }
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -44,14 +68,37 @@ module.exports.createUser = (req, res, next) => {
         avatar: user.avatar,
         email: user.email,
         _id: user._id,
-      }, /* По какой-то непонятной мне причине, не смотря на установленное
-      select: false, в user попадает свойство password, причём происходит
-      это только при создании пользователя, в остальных случаях всё работает
-      как и должно. В интернете нашёл такую проблему только во вложенных схемах,
-      здесь же я без понятия, почему так происходит, поэтому использовал
-      такой костыль */
+      },
     }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.code === 11000) {
+        next(new ConflictError('Пользователь с данным email уже зарегистрирован'));
+        return;
+      }
+      if (err.name === 'ValidationError') {
+        if (err.errors.name) {
+          next(new BadRequestError(err.errors.name.message));
+          return;
+        }
+        if (err.errors.about) {
+          next(new BadRequestError(err.errors.about.message));
+          return;
+        }
+        if (err.errors.avatar) {
+          next(new BadRequestError(err.errors.avatar.message));
+          return;
+        }
+        if (err.errors.password) {
+          next(new BadRequestError(err.errors.password.message));
+          return;
+        }
+        if (err.errors.email) {
+          next(new BadRequestError(err.errors.email.message));
+          return;
+        }
+        next(new InternalServerError('Ошибка на стороне сервера'));
+      }
+    });
 };
 
 module.exports.updateUser = (req, res, next) => {
@@ -63,7 +110,27 @@ module.exports.updateUser = (req, res, next) => {
       throw new NotFoundError('Пользователь с данным _id не найден');
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError' || err.name === 'UnauthorizedError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'ValidationError') {
+        if (err.errors.name) {
+          next(new BadRequestError(err.errors.name.message));
+          return;
+        }
+        if (err.errors.about) {
+          next(new BadRequestError(err.errors.about.message));
+          return;
+        }
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Некорректный _id'));
+        return;
+      }
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
 
 module.exports.updateUserAvatar = (req, res, next) => {
@@ -75,7 +142,23 @@ module.exports.updateUserAvatar = (req, res, next) => {
       throw new NotFoundError('Пользователь с данным _id не найден');
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError' || err.name === 'UnauthorizedError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Некорректный _id'));
+        return;
+      }
+      if (err.name === 'ValidationError') {
+        if (err.errors.avatar) {
+          next(new BadRequestError(err.errors.avatar.message));
+          return;
+        }
+      }
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
 
 module.exports.login = (req, res, next) => {
@@ -95,5 +178,21 @@ module.exports.login = (req, res, next) => {
       });
       res.send({ message: 'Успешная авторизация' });
     })
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        if (err.errors.password) {
+          next(new BadRequestError(err.errors.password.message));
+          return;
+        }
+        if (err.errors.email) {
+          next(new BadRequestError(err.errors.email.message));
+          return;
+        }
+      }
+      if (err.name === 'UnauthorizedError') {
+        next(err);
+        return;
+      }
+      next(new InternalServerError('Ошибка на стороне сервера'));
+    });
 };
