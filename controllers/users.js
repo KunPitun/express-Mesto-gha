@@ -6,32 +6,57 @@ const NotFoundError = require('../errors/not-found-error');
 const InternalServerError = require('../errors/internal-server-error');
 const BadRequestError = require('../errors/bad-request-error');
 const ConflictError = require('../errors/conflict-error');
-const { handleErrors } = require('../errors/handle-errors');
+
+const badRequestErrorMessage = 'Некорректный _id';
+const notFoundErrorMessage = 'Пользователь с данным _id не найден';
+const internalServerErrorMessage = 'Ошибка на стороне сервера';
+const conflictErrorMessage = 'Пользователь с данным email уже зарегистрирован';
+const authMessage = 'Успешная авторизация';
 
 module.exports.getAllUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
     .catch(() => {
-      next(new InternalServerError('Ошибка на стороне сервера'));
+      next(new InternalServerError(internalServerErrorMessage));
     });
 };
 
 module.exports.getUser = (req, res, next) => {
   User.findById(req.params.userId)
     .orFail(() => {
-      throw new NotFoundError('Пользователь с данным _id не найден');
+      throw new NotFoundError(notFoundErrorMessage);
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError(badRequestErrorMessage));
+        return;
+      }
+      next(new InternalServerError(internalServerErrorMessage));
+    });
 };
 
 module.exports.getUserMe = (req, res, next) => {
   User.findById(req.user._id)
     .orFail(() => {
-      throw new NotFoundError('Пользователь с данным _id не найден');
+      throw new NotFoundError(notFoundErrorMessage);
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError(badRequestErrorMessage));
+        return;
+      }
+      next(new InternalServerError(internalServerErrorMessage));
+    });
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -53,32 +78,14 @@ module.exports.createUser = (req, res, next) => {
     }))
     .catch((err) => {
       if (err.code === 11000) {
-        next(new ConflictError('Пользователь с данным email уже зарегистрирован'));
+        next(new ConflictError(conflictErrorMessage));
         return;
       }
       if (err.name === 'ValidationError') {
-        if (err.errors.name) {
-          next(new BadRequestError(err.errors.name.message));
-          return;
-        }
-        if (err.errors.about) {
-          next(new BadRequestError(err.errors.about.message));
-          return;
-        }
-        if (err.errors.avatar) {
-          next(new BadRequestError(err.errors.avatar.message));
-          return;
-        }
-        if (err.errors.password) {
-          next(new BadRequestError(err.errors.password.message));
-          return;
-        }
-        if (err.errors.email) {
-          next(new BadRequestError(err.errors.email.message));
-          return;
-        }
-        next(new InternalServerError('Ошибка на стороне сервера'));
+        next(new BadRequestError(err.message));
+        return;
       }
+      next(new InternalServerError(internalServerErrorMessage));
     });
 };
 
@@ -88,21 +95,23 @@ module.exports.updateUser = (req, res, next) => {
     new: true, runValidators: true,
   })
     .orFail(() => {
-      throw new NotFoundError('Пользователь с данным _id не найден');
+      throw new NotFoundError(notFoundErrorMessage);
     })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        if (err.errors.name) {
-          next(new BadRequestError(err.errors.name.message));
-          return;
-        }
-        if (err.errors.about) {
-          next(new BadRequestError(err.errors.about.message));
-          return;
-        }
+        next(new BadRequestError(err.message));
+        return;
       }
-      handleErrors(err, next);
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError(badRequestErrorMessage));
+        return;
+      }
+      next(new InternalServerError(internalServerErrorMessage));
     });
 };
 
@@ -112,17 +121,23 @@ module.exports.updateUserAvatar = (req, res, next) => {
     new: true, runValidators: true,
   })
     .orFail(() => {
-      throw new NotFoundError('Пользователь с данным _id не найден');
+      throw new NotFoundError(notFoundErrorMessage);
     })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        if (err.errors.avatar) {
-          next(new BadRequestError(err.errors.avatar.message));
-          return;
-        }
+        next(new BadRequestError(err.message));
+        return;
       }
-      handleErrors(err, next);
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError(badRequestErrorMessage));
+        return;
+      }
+      next(new InternalServerError(internalServerErrorMessage));
     });
 };
 
@@ -141,23 +156,13 @@ module.exports.login = (req, res, next) => {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
       });
-      res.send({ message: 'Успешная авторизация' });
+      res.send({ message: authMessage });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        if (err.errors.password) {
-          next(new BadRequestError(err.errors.password.message));
-          return;
-        }
-        if (err.errors.email) {
-          next(new BadRequestError(err.errors.email.message));
-          return;
-        }
-      }
       if (err.name === 'UnauthorizedError') {
         next(err);
         return;
       }
-      next(new InternalServerError('Ошибка на стороне сервера'));
+      next(new InternalServerError(internalServerErrorMessage));
     });
 };

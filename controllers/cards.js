@@ -3,13 +3,17 @@ const NotFoundError = require('../errors/not-found-error');
 const InternalServerError = require('../errors/internal-server-error');
 const BadRequestError = require('../errors/bad-request-error');
 const ForbiddenError = require('../errors/forbidden-error');
-const { handleErrors } = require('../errors/handle-errors');
+
+const badRequestErrorMessage = 'Некорректный _id';
+const notFoundErrorMessage = 'Карточка с данным _id не найдена';
+const internalServerErrorMessage = 'Ошибка на стороне сервера';
+const forbiddenErrorMessage = 'Недостаточно прав для выполнения данного действия';
 
 module.exports.getAllCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
     .catch(() => {
-      next(new InternalServerError('Ошибка на стороне сервера'));
+      next(new InternalServerError(internalServerErrorMessage));
     });
 };
 
@@ -19,30 +23,24 @@ module.exports.createCard = (req, res, next) => {
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        if (err.errors.name) {
-          next(new BadRequestError(err.errors.name.message));
-          return;
-        }
-        if (err.errors.link) {
-          next(new BadRequestError(err.errors.link.message));
-          return;
-        }
-        next(new InternalServerError('Ошибка на стороне сервера'));
+        next(new BadRequestError(err.message));
+        return;
       }
+      next(new InternalServerError(internalServerErrorMessage));
     });
 };
 
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
     .orFail(() => {
-      throw new NotFoundError('Карточка с данным _id не найдена');
+      throw new NotFoundError(notFoundErrorMessage);
     })
     .then((card) => {
       if (card.owner.toString() === req.user._id) {
         Card.findByIdAndRemove(req.params.cardId)
           .then((deletedCard) => res.send({ data: deletedCard }));
       } else {
-        throw new ForbiddenError('Недостаточно прав для выполнения данного действия');
+        throw new ForbiddenError(forbiddenErrorMessage);
       }
     })
     .catch((err) => {
@@ -50,24 +48,52 @@ module.exports.deleteCard = (req, res, next) => {
         next(err);
         return;
       }
-      handleErrors(err, next);
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError(badRequestErrorMessage));
+        return;
+      }
+      next(new InternalServerError(internalServerErrorMessage));
     });
 };
 
 module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .orFail(() => {
-      throw new NotFoundError('Карточка с данным _id не найдена');
+      throw new NotFoundError(notFoundErrorMessage);
     })
     .then((card) => res.send({ data: card }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError(badRequestErrorMessage));
+        return;
+      }
+      next(new InternalServerError(internalServerErrorMessage));
+    });
 };
 
 module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
     .orFail(() => {
-      throw new NotFoundError('Карточка с данным _id не найдена');
+      throw new NotFoundError(notFoundErrorMessage);
     })
     .then((card) => res.send({ data: card }))
-    .catch((err) => handleErrors(err, next));
+    .catch((err) => {
+      if (err.name === 'NotFoundError') {
+        next(err);
+        return;
+      }
+      if (err.name === 'CastError') {
+        next(new BadRequestError(badRequestErrorMessage));
+        return;
+      }
+      next(new InternalServerError(internalServerErrorMessage));
+    });
 };
