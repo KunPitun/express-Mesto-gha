@@ -13,6 +13,20 @@ const internalServerErrorMessage = 'Ошибка на стороне серве�
 const conflictErrorMessage = 'Пользователь с данным email уже зарегистрирован';
 const authMessage = 'Успешная авторизация';
 
+function addTokenCookieToResponse(res, user) {
+  const token = jwt.sign(
+    { _id: user._id },
+    NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+    {
+      expiresIn: '7d',
+    },
+  );
+  res.cookie('jwt', token, {
+    maxAge: 3600000 * 24 * 7,
+    httpOnly: true,
+  });
+}
+
 module.exports.getAllUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
@@ -67,15 +81,18 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       email, password: hash, name, about, avatar,
     }))
-    .then((user) => res.send({
-      data: {
-        name: user.name,
-        about: user.about,
-        avatar: user.avatar,
-        email: user.email,
-        _id: user._id,
-      },
-    }))
+    .then((user) => {
+      addTokenCookieToResponse(res, user);
+      res.send({
+        data: {
+          name: user.name,
+          about: user.about,
+          avatar: user.avatar,
+          email: user.email,
+          _id: user._id,
+        },
+      });
+    })
     .catch((err) => {
       if (err.code === 11000) {
         next(new ConflictError(conflictErrorMessage));
@@ -145,17 +162,7 @@ module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign(
-        { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
-        {
-          expiresIn: '7d',
-        },
-      );
-      res.cookie('jwt', token, {
-        maxAge: 3600000 * 24 * 7,
-        httpOnly: true,
-      });
+      addTokenCookieToResponse(res, user);
       res.send({ message: authMessage });
     })
     .catch((err) => {
