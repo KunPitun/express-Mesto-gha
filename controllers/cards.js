@@ -11,7 +11,7 @@ const forbiddenErrorMessage = 'Недостаточно прав для выпо
 
 module.exports.getAllCards = (req, res, next) => {
   Card.find({})
-    .then((cards) => res.send({ data: cards }))
+    .then((cards) => res.send({ cards }))
     .catch(() => {
       next(new InternalServerError(internalServerErrorMessage));
     });
@@ -20,7 +20,7 @@ module.exports.getAllCards = (req, res, next) => {
 module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.send({ data: card }))
+    .then((card) => res.send({ card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(err.message));
@@ -38,7 +38,7 @@ module.exports.deleteCard = (req, res, next) => {
     .then((card) => {
       if (card.owner.toString() === req.user._id) {
         Card.findByIdAndRemove(req.params.cardId)
-          .then((deletedCard) => res.send({ data: deletedCard }));
+          .then((deletedCard) => res.send({ deletedCard }));
       } else {
         throw new ForbiddenError(forbiddenErrorMessage);
       }
@@ -65,7 +65,7 @@ module.exports.likeCard = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError(notFoundErrorMessage);
     })
-    .then((card) => res.send({ data: card }))
+    .then((card) => res.send({ card }))
     .catch((err) => {
       if (err.name === 'NotFoundError') {
         next(err);
@@ -84,7 +84,7 @@ module.exports.dislikeCard = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError(notFoundErrorMessage);
     })
-    .then((card) => res.send({ data: card }))
+    .then((card) => res.send({ card }))
     .catch((err) => {
       if (err.name === 'NotFoundError') {
         next(err);

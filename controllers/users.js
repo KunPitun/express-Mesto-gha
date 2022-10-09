@@ -14,7 +14,7 @@ const conflictErrorMessage = 'Пользователь с данным email у�
 
 module.exports.getAllUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.send({ data: users }))
+    .then((users) => res.send({ users }))
     .catch(() => {
       next(new InternalServerError(internalServerErrorMessage));
     });
@@ -25,7 +25,7 @@ module.exports.getUser = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError(notFoundErrorMessage);
     })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({ user }))
     .catch((err) => {
       if (err.name === 'NotFoundError') {
         next(err);
@@ -44,7 +44,7 @@ module.exports.getUserMe = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError(notFoundErrorMessage);
     })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({ user }))
     .catch((err) => {
       if (err.name === 'NotFoundError') {
         next(err);
@@ -68,13 +68,11 @@ module.exports.createUser = (req, res, next) => {
     }))
     .then((user) => {
       res.send({
-        data: {
-          name: user.name,
-          about: user.about,
-          avatar: user.avatar,
-          email: user.email,
-          _id: user._id,
-        },
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+        _id: user._id,
       });
     })
     .catch((err) => {
@@ -98,7 +96,7 @@ module.exports.updateUser = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError(notFoundErrorMessage);
     })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({ user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(err.message));
@@ -124,7 +122,7 @@ module.exports.updateUserAvatar = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError(notFoundErrorMessage);
     })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({ user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(err.message));

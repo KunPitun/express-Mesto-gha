@@ -6,6 +6,9 @@ const unauthorizedErrorMessage = 'Необходима авторизация';
 
 module.exports = (req, res, next) => {
   const { authorization } = req.headers;
+  console.log(!authorization);
+  console.log(!authorization.startsWith('Bearer '));
+  console.log((!authorization) || (!authorization.startsWith('Bearer ')));
   if (!authorization || !authorization.startsWith('Bearer ')) {
     next(new UnauthorizedError(unauthorizedErrorMessage));
     return;
