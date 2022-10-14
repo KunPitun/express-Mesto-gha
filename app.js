@@ -6,12 +6,9 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { errors } = require('celebrate');
 const cors = require('cors');
-const { createUser, login } = require('./controllers/users');
-const auth = require('./middlewares/auth');
 const errorsHandler = require('./middlewares/errors');
-const NotFoundError = require('./errors/not-found-error');
-const { loginValidator, createUserValidator } = require('./validators/celebrate-validators');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
+const routes = require('./routes');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -43,15 +40,7 @@ app.get('/crash-test', () => {
   }, 0);
 });
 
-app.post('/signin', loginValidator, login);
-app.post('/signup', createUserValidator, createUser);
-
-app.use(auth);
-
-app.use('/users', require('./routes/users'));
-app.use('/cards', require('./routes/cards'));
-
-app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
+app.use(routes);
 
 app.use(errorLogger);
 
